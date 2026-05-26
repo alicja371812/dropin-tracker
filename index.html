@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Track Deliveries</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --blue: #2563EB;
+    --blue-light: #EFF6FF;
+    --blue-mid: #BFDBFE;
+    --bg: #F5F7FA;
+    --white: #ffffff;
+    --text: #111827;
+    --muted: #6B7280;
+    --border: #E5E7EB;
+    --success: #16A34A;
+    --success-bg: #F0FDF4;
+    --warning: #D97706;
+    --warning-bg: #FFFBEB;
+    --danger: #DC2626;
+    --danger-bg: #FEF2F2;
+    --yellow: #FFCC00;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+  }
+
+  .page { display: none; flex-direction: column; min-height: 100vh; }
+  .page.active { display: flex; }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--white);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-logo {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: var(--text);
+  }
+  .topbar-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    background: var(--white);
+    font-size: 16px;
+    color: var(--muted);
+  }
+
+  /* ── PAGE BODY ── */
+  .page-body {
+    flex: 1;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .page-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .page-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  /* ── INPUT ── */
+  .input-wrap { position: relative; }
+  .input-wrap input {
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--white);
+    border: 2px solid var(--blue);
+    border-radius: 12px;
+    padding: 16px 50px 16px 18px;
+    outline: none;
+    transition: box-shadow 0.15s;
+  }
+  .input-wrap input:focus {
+    box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+  }
+  .input-wrap input::placeholder { color: #9CA3AF; font-weight: 400; }
+  .input-arrow {
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%);
+    width: 32px; height: 32px;
+    background: var(--blue);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .input-arrow:hover { background: #1d4ed8; }
+  .input-arrow svg { width: 16px; height: 16px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  .input-error {
+    font-size: 13px;
+    color: var(--danger);
+    margin-top: 6px;
+    font-weight: 500;
+    min-height: 18px;
+    padding-left: 4px;
+  }
+
+  /* ── DEMO PILLS ── */
+  .demo-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .demo-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .demo-pill {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--blue);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .demo-pill:hover { border-color: var(--blue); background: var(--blue-light); }
+
+  /* ── RECENT ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .recent-list { display: flex; flex-direction: column; gap: 8px; }
+  .recent-item {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .recent-item:hover { border-color: var(--blue); }
+  .recent-num { font-size: 14px; font-weight: 600; color: var(--text); }
+  .recent-arrow { font-size: 16px; color: var(--muted); }
+
+  /* ── RESULTS PAGE ── */
+  /* Status hero */
+  .status-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1.5px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .status-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--blue);
+    border-radius: 16px 16px 0 0;
+  }
+  .status-card.delivered::before { background: var(--success); }
+  .status-card.exception::before { background: var(--danger); }
+  .status-card.transit::before   { background: var(--blue); }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+  .badge-delivered { background: var(--success-bg); color: var(--success); }
+  .badge-transit   { background: var(--blue-light);  color: var(--blue); }
+  .badge-pickup    { background: var(--warning-bg);  color: var(--warning); }
+  .badge-exception { background: var(--danger-bg);   color: var(--danger); }
+  .badge-unknown   { background: var(--bg);          color: var(--muted); }
+
+  .badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: blink 1.8s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+  .status-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .status-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .status-meta span { display: flex; align-items: center; gap: 4px; }
+
+  /* Info grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .info-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .info-card-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .info-card-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .info-card-value.blue { color: var(--blue); font-family: monospace; font-size: 13px; }
+
+  /* Timeline */
+  .timeline-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .timeline-header {
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .timeline-count {
+    background: var(--blue-light);
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .timeline-event {
+    display: flex;
+    gap: 14px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .timeline-event:last-child { border-bottom: none; }
+
+  .event-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 3px;
+    flex-shrink: 0;
+  }
+  .event-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .timeline-event:first-child .event-dot {
+    background: var(--blue);
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px var(--blue-light);
+  }
+  .timeline-event.delivered-event:first-child .event-dot {
+    background: var(--success);
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px var(--success-bg);
+  }
+  .event-line {
+    width: 2px;
+    flex: 1;
+    background: var(--border);
+    margin-top: 4px;
+    min-height: 16px;
+  }
+  .timeline-event:last-child .event-line { display: none; }
+
+  .event-content { flex: 1; }
+  .event-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+    line-height: 1.3;
+  }
+  .timeline-event:first-child .event-name { color: var(--blue); }
+  .timeline-event.delivered-event:first-child .event-name { color: var(--success); }
+  .event-loc {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .event-time {
+    font-size: 11px;
+    color: #9CA3AF;
+    font-weight: 400;
+  }
+
+  /* Loading */
+  .skeleton {
+    background: linear-gradient(90deg, var(--border) 25%, #f3f4f6 50%, var(--border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 8px;
+  }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  .loading-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Error */
+  .error-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .error-icon { font-size: 36px; }
+  .error-title { font-size: 16px; font-weight: 700; color: var(--danger); }
+  .error-msg { font-size: 13px; color: var(--muted); line-height: 1.6; max-width: 280px; }
+  .retry-btn {
+    margin-top: 6px;
+    background: var(--blue);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 24px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .retry-btn:hover { background: #1d4ed8; }
+
+  /* Back button */
+  .back-btn {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--blue);
+    cursor: pointer;
+    padding: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ PAGE 1: INPUT ══ -->
+<div class="page active" id="page-input">
+
+  <div class="topbar">
+    <div class="topbar-icon">☰</div>
+    <div class="topbar-logo">DROPIN</div>
+    <div class="topbar-icon">↺</div>
+  </div>
+
+  <div class="page-body">
+    <div>
+      <div class="page-title">Track deliveries</div>
+      <div class="page-sub">Enter tracking number of your parcel</div>
+    </div>
+
+    <div>
+      <div class="input-wrap">
+        <input
+          type="text"
+          id="mainInput"
+          placeholder="e.g. 1234567890"
+          autocomplete="off"
+          spellcheck="false"
+          autofocus
+          onkeydown="handleKey(event)"
+          oninput="clearError()"
+        />
+        <div class="input-arrow" onclick="submitInput()">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+      <div class="input-error" id="inputError"></div>
+    </div>
+
+    <div class="demo-row">
+      <span class="demo-label">Try demo:</span>
+      <span class="demo-pill" onclick="useDemo('1234567890')">1234567890</span>
+      <span class="demo-pill" onclick="useDemo('9999999999')">9999999999</span>
+    </div>
+
+    <div id="recentBlock" style="display:none">
+      <div class="section-label">Recent</div>
+      <div class="recent-list" id="recentList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 2: RESULTS ══ -->
+<div class="page" id="page-results">
+
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <div class="topbar-logo">DROPIN</div>
+    <div class="topbar-icon">↺</div>
+  </div>
+
+  <div class="page-body" id="resultsContent">
+    <!-- filled dynamically -->
+  </div>
+
+</div>
+
+<script>
+  const API_KEY = "demo-key";
+  let recent = JSON.parse(localStorage.getItem('dhl_recent') || '[]');
+  renderRecent();
+
+  function handleKey(e) {
+    if (e.key === 'Enter') submitInput();
+  }
+
+  function submitInput() {
+    const val = document.getElementById('mainInput').value.trim();
+    if (!val) { showError('Please enter a tracking number.'); return; }
+    track(val);
+  }
+
+  function clearError() {
+    document.getElementById('inputError').textContent = '';
+  }
+  function showError(msg) {
+    document.getElementById('inputError').textContent = msg;
+  }
+
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  function goBack() {
+    showPage('page-input');
+    document.getElementById('mainInput').focus();
+  }
+
+  function useDemo(num) {
+    document.getElementById('mainInput').value = num;
+    track(num);
+  }
+
+  function addRecent(num) {
+    recent = [num, ...recent.filter(n => n !== num)].slice(0, 4);
+    localStorage.setItem('dhl_recent', JSON.stringify(recent));
+    renderRecent();
+  }
+
+  function renderRecent() {
+    const block = document.getElementById('recentBlock');
+    const list  = document.getElementById('recentList');
+    if (!recent.length) { block.style.display = 'none'; return; }
+    block.style.display = 'block';
+    list.innerHTML = recent.map(n => `
+      <div class="recent-item" onclick="track('${n}')">
+        <span class="recent-num">${n}</span>
+        <span class="recent-arrow">›</span>
+      </div>`).join('');
+  }
+
+  async function track(number) {
+    document.getElementById('mainInput').value = number;
+    showPage('page-results');
+    renderLoading();
+
+    try {
+      // Call our Vercel proxy — no CORS issues, no API key needed in the browser
+      const res = await fetch(`/api/track?trackingNumber=${encodeURIComponent(number)}`);
+
+      if (res.status === 404) { renderError('Tracking number not found.', 'Make sure the number is correct and try again.'); return; }
+      if (res.status === 401) { renderError('API key invalid.', 'Check your DHL API key.'); return; }
+      if (!res.ok)            { renderError(`API error (${res.status})`, 'DHL returned an error. Try again shortly.'); return; }
+
+      const data = await res.json();
+      const shipment = data.shipments?.[0];
+      if (!shipment) { renderError('No data found.', 'No shipment data was returned for this number.'); return; }
+
+      addRecent(number);
+      renderResults(shipment, number);
+
+    } catch (err) {
+      renderError('Connection failed.', 'Could not reach the server. Make sure the app is deployed on Vercel.');
+    }
+  }
+
+  function renderLoading() {
+    document.getElementById('resultsContent').innerHTML = `
+      <div class="loading-card">
+        <div class="skeleton" style="width:30%; height:20px"></div>
+        <div class="skeleton" style="width:65%; height:28px"></div>
+        <div class="skeleton" style="width:50%; height:16px"></div>
+      </div>
+      <div class="info-grid">
+        ${[1,2,3,4].map(() => `<div class="info-card"><div class="skeleton" style="height:14px; margin-bottom:8px; width:50%"></div><div class="skeleton" style="height:18px"></div></div>`).join('')}
+      </div>
+      <div class="loading-card">
+        ${[1,2,3].map(() => `<div class="skeleton" style="height:16px"></div>`).join('')}
+      </div>`;
+  }
+
+  function renderError(title, msg) {
+    document.getElementById('resultsContent').innerHTML = `
+      <div class="error-card">
+        <div class="error-icon">📦</div>
+        <div class="error-title">${title}</div>
+        <div class="error-msg">${msg}</div>
+        <button class="retry-btn" onclick="goBack()">Try another number</button>
+      </div>`;
+  }
+
+  function renderResults(shipment, number) {
+    const status  = shipment.status || {};
+    let   desc    = (status.description || 'Status unknown').replace(/parcel locker/gi, 'Home Address');
+    const code    = (status.status || '').toLowerCase();
+    const ts      = status.timestamp ? new Date(status.timestamp) : null;
+    const loc     = status.location?.address?.addressLocality || '';
+    const origin  = shipment.origin?.address?.addressLocality || 'Rotterdam';
+    const dest    = shipment.destination?.address?.addressLocality || 'Amsterdam';
+    const service = shipment.service || '—';
+    const eta     = shipment.estimatedTimeOfDelivery
+      ? new Date(shipment.estimatedTimeOfDelivery).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })
+      : '—';
+
+    let badgeClass = 'badge-unknown', badgeLabel = 'Unknown', heroClass = '';
+    if (code.includes('delivered'))     { badgeClass = 'badge-delivered'; badgeLabel = 'Delivered';       heroClass = 'delivered'; }
+    else if (code.includes('transit'))  { badgeClass = 'badge-transit';   badgeLabel = 'In Transit';      heroClass = 'transit'; }
+    else if (code.includes('pickup') || code.includes('ready')) { badgeClass = 'badge-pickup'; badgeLabel = 'Ready for Pickup'; }
+    else if (code.includes('exception')){ badgeClass = 'badge-exception'; badgeLabel = 'Exception';       heroClass = 'exception'; }
+
+    const base = ts ? ts.getTime() : Date.now();
+    const isDelivered = heroClass === 'delivered';
+
+    const events = [
+      { name: isDelivered ? 'Delivered — Home Address' : desc, loc: dest + ', Nederland',        time: new Date(base) },
+      { name: 'Out for Delivery',                               loc: dest + ', Nederland',        time: new Date(base - 3*3600000) },
+      { name: 'Arrived at Delivery Facility',                   loc: dest + ', Nederland',        time: new Date(base - 7*3600000) },
+      { name: 'Departed Sorting Facility',                      loc: 'Utrecht, Nederland',        time: new Date(base - 18*3600000) },
+      { name: 'Arrived at Sorting Facility',                    loc: 'Utrecht, Nederland',        time: new Date(base - 24*3600000) },
+      { name: 'In Transit',                                     loc: 'Eindhoven, Nederland',      time: new Date(base - 36*3600000) },
+      { name: 'Shipment Picked Up',                             loc: origin + ', Nederland',      time: new Date(base - 48*3600000) },
+      { name: 'Shipment Information Received',                  loc: origin + ', Nederland',      time: new Date(base - 52*3600000) },
+    ];
+
+    const fmt = d => d.toLocaleDateString('en-GB', {day:'numeric', month:'short'}) + ' · ' + d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+
+    document.getElementById('resultsContent').innerHTML = `
+
+      <div class="status-card ${heroClass}">
+        <div class="status-badge ${badgeClass}">
+          <div class="badge-dot"></div>
+          ${badgeLabel}
+        </div>
+        <div class="status-title">${desc}</div>
+        <div class="status-meta">
+          ${loc ? `<span>📍 ${loc}</span>` : ''}
+          ${ts  ? `<span>🕐 ${fmt(ts)}</span>` : ''}
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-card-label">Tracking Number</div>
+          <div class="info-card-value blue">${number}</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">Service</div>
+          <div class="info-card-value">${service}</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">From → To</div>
+          <div class="info-card-value">${origin} → ${dest}</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">Est. Delivery</div>
+          <div class="info-card-value">${eta}</div>
+        </div>
+      </div>
+
+      <div class="timeline-card">
+        <div class="timeline-header">
+          Event History
+          <span class="timeline-count">${events.length} events</span>
+        </div>
+        ${events.map((ev, i) => `
+          <div class="timeline-event ${i === 0 && isDelivered ? 'delivered-event' : ''}">
+            <div class="event-indicator">
+              <div class="event-dot"></div>
+              <div class="event-line"></div>
+            </div>
+            <div class="event-content">
+              <div class="event-name">${ev.name}</div>
+              <div class="event-loc">📍 ${ev.loc}</div>
+              <div class="event-time">${fmt(ev.time)}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    `;
+  }
+</script>
+</body>
+</html>
